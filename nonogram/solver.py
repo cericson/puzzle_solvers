@@ -411,6 +411,42 @@ def solve_line(line, groups):
     assert_line_valid(line, groups)
     return line
 
+def check_horizontal_symmetry(puzzle_state, row_numbers, col_numbers):
+    if (
+        col_numbers == col_numbers[::-1] and
+        all(line_numbers == line_numbers[::-1] for line_numbers in row_numbers)
+    ):
+        for row, line_numbers in enumerate(row_numbers):
+            if len(line_numbers) % 2 == 0:
+                if puzzle_state.shape[1] % 2 == 0:
+                    clear_start = puzzle_state.shape[1] // 2 - 1
+                    puzzle_state[row, clear_start:clear_start + 2] = 0
+                else:
+                    clear_start = puzzle_state.shape[1] // 2
+                    puzzle_state[row, clear_start:clear_start + 1] = 0
+            else:
+                middle_number = line_numbers[len(line_numbers) // 2]
+                fill_start = (puzzle_state.shape[1] - middle_number) // 2
+                puzzle_state[row, fill_start:(fill_start + middle_number)] = 1
+
+def check_vertical_symmetry(puzzle_state, row_numbers, col_numbers):
+    if (
+        row_numbers == row_numbers[::-1] and
+        all(line_numbers == line_numbers[::-1] for line_numbers in col_numbers)
+    ):
+        for col, line_numbers in enumerate(col_numbers):
+            if len(line_numbers) % 2 == 0:
+                if puzzle_state.shape[0] % 2 == 0:
+                    clear_start = puzzle_state.shape[0] // 2 - 1
+                    puzzle_state[clear_start:clear_start + 2, col] = 0
+                else:
+                    clear_start = puzzle_state.shape[0] // 2
+                    puzzle_state[clear_start:clear_start + 1, col] = 0
+            else:
+                middle_number = line_numbers[len(line_numbers) // 2]
+                fill_start = (puzzle_state.shape[0] - middle_number) // 2
+                puzzle_state[fill_start:(fill_start + middle_number), col] = 1
+
 def solve_puzzle(puzzle_state, row_numbers, col_numbers, start_time=None, depth=0):
     global MAX_DEPTH
     if depth > MAX_DEPTH:
@@ -424,6 +460,10 @@ def solve_puzzle(puzzle_state, row_numbers, col_numbers, start_time=None, depth=
     timeout = 5 if INTERACTIVE else 120
     if time.time() - start_time > timeout:
         return puzzle_state
+
+    if depth == 0:
+        check_horizontal_symmetry(puzzle_state, row_numbers, col_numbers)
+        check_vertical_symmetry(puzzle_state, row_numbers, col_numbers)
 
     while True:
         last_puzzle_state = puzzle_state.copy()
